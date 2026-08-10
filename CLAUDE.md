@@ -17,6 +17,15 @@ smoking area in Taipei — like "search nearby restaurants" on Google Maps.
 
 Full details: `spec_en.md`.
 
+**Live deployment**: https://kunandkarina.github.io/taipei-smoking-map/
+(GitHub Pages, deployed from `main` branch root, no custom domain).
+Verified in-browser against the real production origin: service worker
+registers/activates with scope correctly resolved to the `/taipei-
+smoking-map/` subpath, manifest loads with all 4 icon entries, all 274
+markers render, and the app shell + data JSON are both cached for
+offline use — all paths in the project are relative, so nothing needed
+adjusting for the subpath deployment.
+
 ## Tech Stack
 
 | Concern | Choice |
@@ -173,7 +182,31 @@ zoomed, so there's no stale state for it to resync.
   the local dev server outright (not just DevTools offline mode) — a
   reload still rendered the full map with all 274 markers from cache, no
   blank page.
-- [ ] HTTPS deployment, mobile-portrait-first responsive design
+- [x] HTTPS deployment (GitHub Pages, https://kunandkarina.github.io/
+  taipei-smoking-map/ — see "Live deployment" note above)
+- [x] Mobile-portrait-first responsive design. Fixed a real overlap bug
+  found during testing: Leaflet's zoom control defaults to a fixed
+  top-left position, which sat underneath the floating top bar
+  (location banner + filter bar) once the bar wrapped to two rows on
+  narrow screens — completely hidden, not just visually crowded. Fixed
+  with a `ResizeObserver` on `#top-stack` (`src/main.js`) that keeps a
+  `--map-controls-offset` CSS var in sync with the bar's real (variable)
+  height, and `.leaflet-top { margin-top: var(--map-controls-offset) }`
+  in `main.css` — adapts live whether the bar is one row or two, banner
+  shown or hidden. Also added: `viewport-fit=cover` on the viewport meta
+  plus `env(safe-area-inset-*)` padding on the top bar and detail sheet
+  (top bar previously only handled the bottom inset on the detail sheet
+  footer; notch/home-indicator/rounded-corner areas on the sides and top
+  were unhandled), and larger touch targets under 480px width (checkbox
+  rows, filter pills, detail-sheet close button) via a `max-width: 480px`
+  media query. Verified in-browser at 320px and 375px widths using a
+  same-origin iframe harness (this environment's window resize is
+  clamped to a 500px minimum, so real narrow viewports aren't reachable
+  by resizing the browser window directly) — confirmed no horizontal
+  overflow, zoom control fully visible below the bar in both one-row and
+  two-row (banner + filter bar) states, and the detail sheet/dropdown
+  panel both render correctly at these widths. Desktop width re-checked
+  for regressions afterward — none.
 
 **Phase 2 (nice-to-have, must not block MVP)**: Nominatim search box,
 EN/中文 language toggle, "currently open" badge (needs hours normalization

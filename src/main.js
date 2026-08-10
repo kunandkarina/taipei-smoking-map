@@ -50,6 +50,19 @@ function hideLocationBanner() {
   document.getElementById('location-banner').hidden = true;
 }
 
+// The floating top bar's height changes (banner shown/hidden, filter bar
+// wrapping to a second row on narrow screens), so Leaflet's zoom control —
+// which defaults to a fixed top-left position — needs a live offset rather
+// than a fixed margin, or it ends up hidden underneath the bar.
+function observeTopStackHeight() {
+  const topStack = document.getElementById('top-stack');
+  const updateOffset = () => {
+    document.documentElement.style.setProperty('--map-controls-offset', `${topStack.offsetHeight + 8}px`);
+  };
+  updateOffset();
+  new ResizeObserver(updateOffset).observe(topStack);
+}
+
 // Geolocation is requested independently of map/marker rendering: the
 // fallback city-wide view is already on screen by the time this runs, and
 // this never blocks or is awaited by the rest of main().
@@ -97,6 +110,7 @@ async function main() {
   const map = createMap();
   initGeolocation(map);
   initDetailView();
+  observeTopStackHeight();
 
   const clusterGroup = createClusterGroup();
   const areas = await loadAreas();
